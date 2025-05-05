@@ -116,14 +116,21 @@ class MathGramatica
       RegraMath.new('S',['N' , 'U']),
       RegraMath.new('S',['DIGITOS']),
       RegraMath.new('S',['O', 'N']),
+      RegraMath.new('S',['E', 'Q']),
       RegraMath.new('A',['A', 'Y']),
       RegraMath.new('A',['A', 'X']),
       RegraMath.new('A',['N', 'U']),
       RegraMath.new('A',['DIGITOS']),
       RegraMath.new('A',['O', 'N']),
+      RegraMath.new('A',['E', 'A']),
+      RegraMath.new('A',['E', 'Q']),
       RegraMath.new('B',['N', 'U']),
       RegraMath.new('B',['DIGITOS']),
       RegraMath.new('B',['O', 'N']),
+      RegraMath.new('B',['E', 'Q']),
+      RegraMath.new('E',['J', 'S']),
+      RegraMath.new('E',['J', 'A']),
+      RegraMath.new('E',['J', 'B']),
       RegraMath.new('Z',['L', 'A']),
       RegraMath.new('Z',['L', 'N']),
       RegraMath.new('W',['O', 'A']),
@@ -132,13 +139,17 @@ class MathGramatica
       RegraMath.new('Y',['F', 'N']),
       RegraMath.new('X',['P', 'B']),
       RegraMath.new('X',['P', 'N']),
-      RegraMath.new('U',['H', 'N']),
+      RegraMath.new('U',['H', 'A']),
+      RegraMath.new('U',['H', 'B']),
+      RegraMath.new('U',['H', 'S']),
       RegraMath.new('O',['SUB']),
       RegraMath.new('L',['SUM']),
       RegraMath.new('F',['MULT']),
       RegraMath.new('P',['DIV']),
       RegraMath.new('H',['EXP']),
       RegraMath.new('N',['DIGITOS']),
+      RegraMath.new('J',['P_ESQ']),
+      RegraMath.new('Q',['P_DIR']),
     ]
     @simbolo_inicial = simbolo_inicial
   end
@@ -262,6 +273,8 @@ class MathParser
           return ["divisao", traduz_operacao(no.esquerda), extrair_operando(no.direita)]
         when 'U'
           return ["exponenciacao", traduz_operacao(no.esquerda), extrair_operando(no.direita)]
+        when 'E'
+          return ["parenteses", traduz_operacao(no.esquerda), extrair_operando(no.direita)]
         end
       end
     end
@@ -270,7 +283,7 @@ class MathParser
       return traduz_operacao(no.esquerda) if no.esquerda
       return no.valor if no.valor
     end
-    if ['Z', 'W', 'Y', 'X', 'U'].include?(no.simbolo)
+    if ['Z', 'W', 'Y', 'X', 'U','E'].include?(no.simbolo)
       return extrair_operando(no)
     end
     if no.esquerda
@@ -313,7 +326,9 @@ class MathParser
 
     if aceito?
       operacao_traduzida = traduz_operacao(raiz) 
-      return realizar_operacao(operacao_traduzida), operacao_traduzida
+      resultado,warning = realizar_operacao(operacao_traduzida), operacao_traduzida
+      puts "#{warning} <- Warning"
+      puts "#{entrada} = #{resultado} <- Resultado"
     else
       puts "Expressão rejeitada."
     end

@@ -1,2 +1,2 @@
-app:
-  teste: $2^2 + 2$
+app2:
+  teste: "teste"

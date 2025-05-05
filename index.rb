@@ -83,7 +83,7 @@ class Lexer
         tokens << sum
       when /\d/
         tokens << digito
-      when /[a-zA-Z]/
+      when /[a-zA-Z0-9]/
         tokens << id_string
       else
         advance
@@ -117,6 +117,13 @@ class Lexer
 
   def digito()
     result = ''
+
+    sinal = @input[@position - 1]
+    if sinal == "-"
+      result += sinal
+      advance
+    end
+
     while current_char =~ /[\d\.]/
       result += current_char
       advance
@@ -127,7 +134,7 @@ class Lexer
 
   def id_string()
     resultado = ''
-    while current_char =~ /[a-zA-Z_]/
+    while current_char =~ /[a-zA-Z0-9_]/
       resultado += current_char
       advance
     end
@@ -143,6 +150,7 @@ class Lexer
       Token.new(:STRING, resultado)
     end
   end
+
 
   def current_char
     @input[@position]
@@ -207,8 +215,6 @@ class CYKParser
     tokens.each_with_index do | token, index |
       if token.type == :SIGN
         resultado, warning = @mathParser.run(token.value)
-        puts "#{warning} <- Warning"
-        puts "#{token.value} = #{resultado} <- Resultado"
       end
     end
   end
@@ -249,27 +255,37 @@ class CYKParser
       end
   end 
 
-  def to_ruby(tokens)
-    resultado = "{#{"\n"}"
-    tokens.each_with_index do | token,index |
+  def to_ruby(entrada=[],saida="")
+    
+    saida << "{"
+    saida << "\n"
+    entrada.each_with_index do | token , index |
       if token.type == :STRING
-         resultado << token.value
+        saida << token.value
       elsif token.type == :COLON
-          resultado << "=>"
+          if entrada[index + 1].type == :NEWLINE
+            next_block = index + 2
+            saida << ": #{"\n"}"
+            saida << to_ruby(entrada[next_block..-1], saida)
+          else
+            saida << "=>"
+          end
       elsif token.type == :NEWLINE
-          resultado << ",\n"
+        saida << ",\n"
       elsif token.type == :BOOLEAN
-          resultado << token.value
+        saida << token.value
       elsif token.type == :NUMBER
-        resultado << token.value
+        saida << token.value
       elsif token.type == :NULL
-        resultado << token.value
+        saida << token.value
       elsif token.type == :SIGN
         calculo = @mathParser.run(token.value)[0].to_s
-        resultado << calculo
+        saida << calculo
       end
     end
-    # resultado << "#{"\n"}}"
+
+    saida << "#{"\n"}}"
+    return saida
   end
 
   def match_de_nao_terminais?(inicio, meio, fim, regra)
@@ -316,14 +332,16 @@ regras = [
   Regra.new('G', ['T', 'Z'])
 ]
 
-print("---------entrada---------\n")
-print(entrada)
-print("\n----------saida----------\n")
+puts("---------entrada---------\n")
+puts(entrada)
+puts("\n----------saida----------\n")
 gramatica = Gramatica.new(regras, 'S')
 lexer = Lexer.new(entrada)
 tokens = lexer.tokenize
 parser = CYKParser.new(gramatica)
-parser.to_ruby(tokens)
+resultado = parser.to_ruby(tokens)
 parser.parse(tokens)
 
 puts parser.aceito? ? "✅ Aceito" : "❌ Não aceito"
+puts "Tokens: #{tokens.map(&:to_s).join(', ')}"
+puts "\n Conversão para Ruby: \n #{resultado}"
